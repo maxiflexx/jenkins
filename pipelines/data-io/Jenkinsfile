@@ -9,6 +9,11 @@ pipeline {
     environment {
         DOCKER_IMAGE = 'chungdaeking/data-io:dev'
         CONTAINER_NAME = 'data-io-dev'
+
+        DATA_IO_PORT = '3333'
+        OPENSEARCH_NODE = 'https://host.docker.internal:9200'
+        OPENSEARCH_USERNAME = 'admin'
+        OPENSEARCH_PASSWORD = 'hn889JftNIxxdar'
     }
 
     stages {
@@ -40,7 +45,16 @@ pipeline {
                 script {
                     // 새로운 컨테이너 실행
                     sh """
-                    docker run -d --name ${CONTAINER_NAME} --network jenkins_opensearch-net -p 3333:3333 ${DOCKER_IMAGE}
+                    docker run \\
+                        -e PORT=${DATA_IO_PORT} \\
+                        -e OPENSEARCH_NODE=${OPENSEARCH_NODE} \\
+                        -e OPENSEARCH_USERNAME=${OPENSEARCH_USERNAME} \\
+                        -e OPENSEARCH_PASSWORD=${OPENSEARCH_PASSWORD} \\
+                        -d \\
+                        --name ${CONTAINER_NAME} \\
+                        --network jenkins_opensearch-net \\
+                        -p 3333:3333 \\
+                        ${DOCKER_IMAGE}
                     """
                 }
             }
