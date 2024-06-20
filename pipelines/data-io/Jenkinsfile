@@ -1,0 +1,49 @@
+pipeline {
+    agent any
+
+    triggers {
+        // 매 시간마다 트리거
+        cron('H * * * *')
+    }
+
+    environment {
+        DOCKER_IMAGE = 'chungdaeking/data-io:dev'
+        CONTAINER_NAME = 'data-io-dev'
+    }
+
+    stages {
+        stage('Pull Docker Image') {
+            steps {
+                script {
+                    // Docker Hub에서 최신 이미지 pull
+                    sh "docker pull ${DOCKER_IMAGE}"
+                }
+            }
+        }
+
+        stage('Stop and Remove Existing Container') {
+            steps {
+                script {
+                    // 기존 컨테이너가 존재하면 중지하고 삭제
+                    sh """
+                    if [ \$(docker ps -q -f name=${CONTAINER_NAME}) ]; then
+                        docker stop ${CONTAINER_NAME}
+                        docker rm ${CONTAINER_NAME}
+                    fi
+                    """
+                }
+            }
+        }
+
+        stage('Run Docker Container') {
+            steps {
+                script {
+                    // 새로운 컨테이너 실행
+                    sh """
+                    docker run -d --name ${CONTAINER_NAME} -p 3333:3333 ${DOCKER_IMAGE} —network jenkins_opensearch-net
+                    """
+                }
+            }
+        }
+    }
+}
