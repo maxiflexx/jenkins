@@ -1,0 +1,31 @@
+pipeline {
+    agent any
+
+    environment {
+        AIRFLOW_CONTAINER = 'airflow-airflow-webserver-1'
+    }
+
+    triggers {
+        pollSCM('H * * * *')  // Every 5 minutes
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git url: 'https://github.com/maxiflexx/airflow.git', branch: 'main'
+            }
+        }
+
+        stage('Push Airflow') {
+            steps {
+                script {
+                    sh '''
+                    docker cp dags/. ${AIRFLOW_CONTAINER}:/opt/airflow/dags
+                    docker cp config/. ${AIRFLOW_CONTAINER}:/opt/airflow/config
+                    docker cp plugins/. ${AIRFLOW_CONTAINER}:/opt/airflow/plugins
+                    '''
+                }
+            }
+        }
+    }
+}
